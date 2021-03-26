@@ -35,7 +35,18 @@ class MarkovAgent(ProbabilityAgent):
     
     new_counter = Counter()
     distribution = self._echo_grid.get_echo_distribution()
-    DistributionModel.normalize(distribution)
+    seen = False
+    for k in distribution.keys():
+      if k in self._thoughts and self._thoughts[k] != 0:
+        seen = True
+    if not seen:
+      self.reset_thoughts()
+    for key,val in distribution.items():
+      if key in self._valid_positions:
+        new_counter[key] = val * self._thoughts[key]
+    DistributionModel.normalize(new_counter)
+    self._thoughts = new_counter
+    """
     for pos in self._valid_positions:
       ft1 = self._thoughts[pos] #ft = something
       if (ft1 == 0):
@@ -53,6 +64,7 @@ class MarkovAgent(ProbabilityAgent):
     
     for pos, val in new_counter.items():
       self._thoughts[pos] = val
+    """
 
     print("======================================")
     print(self._thoughts.items())

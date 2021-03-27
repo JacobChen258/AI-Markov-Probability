@@ -4,49 +4,100 @@ from probability import EchoGrid, DistributionModel
 from state import *
 from collections import Counter
 
+
 class MarkovAgent(ProbabilityAgent):
-  
-  def __init__(self, valid_positions):
-    super().__init__(valid_positions)
-    self._echo_grid = EchoGrid()
 
-  # Helpful Hints and Functions:
-  # EchoGrid.get_echo_distribution() --> returns a distribution over all legal positions on the map as a dictionary
-  #                                      where the key is a position and value is the probability of a mouse being there.
-  # ProbabilityAgent.reset_thoughts() --> resets self._thoughts to be uniform (i.e. agent thinks all positions may have a mouse)
-  # DistributionModel.normalize(distribution) --> normalizes the given distribution
-  # DistributionModel.get_movement_distribution(state, agent_pos) --> returns a movement distribution for the given agent through it's position. 
-  # GameState.copy() --> returns a copy
-  # GameStateHandler.move_mouse(old_pos, new_pos) --> moves the mouse from the old position to the new position on the map
-  
-  # Instead of using a regular dictionary we recommend you use a Counter object to avoid needing to check for keys before using
-  # them. Counters default any unseen key to the value of 0.
+    def __init__(self, valid_positions):
+        super().__init__(valid_positions)
+        self._echo_grid = EchoGrid()
 
-  # Remember to normalize brefore updating the agents thoughts and to look over only valid positions (use self._valid_positions).
-  
-  def listen(self, state):
-    # Question 1, your MarkovAgent listen solution goes here.
-    # For this method there is a special case to consider which happens when the distribution given by the EchoGrid
-    # has only information which has NOT been seen before. In this case you must reset your current thought distribution
-    # before continuing.
+    # Helpful Hints and Functions:
+    # EchoGrid.get_echo_distribution() --> returns a distribution over all legal positions on the map as a dictionary
+    #                                      where the key is a position and value is the probability of a mouse being there.
+    # ProbabilityAgent.reset_thoughts() --> resets self._thoughts to be uniform (i.e. agent thinks all positions may have a mouse)
+    # DistributionModel.normalize(distribution) --> normalizes the given distribution
+    # DistributionModel.get_movement_distribution(state, agent_pos) --> returns a movement distribution for the given agent through it's position.
+    # GameState.copy() --> returns a copy
+    # GameStateHandler.move_mouse(old_pos, new_pos) --> moves the mouse from the old position to the new position on the map
 
-    # Uncomment this when you start implementing
-    # self._echo_grid.update(state) # Do Not Remove, it is required to have the EchoGrid give accurate information
-    
-    # Write your code here
-    raise NotImplementedError("MarkovAgent's Listen not implemented")
-    
-  # Implement the Time Lapse for HMM (Question 3)
-  def predict(self, state):
-    # Question 2, your MarkovAgent predict solution goes here.
-    # Recall for the predict method we want to track one mouse down at a time by "predicting their moves". This should
-    # be done through moving the mouse into positions on the map using this distribution to update your thoughts.
-    # To avoid annoyances of state manipulation you should use a copy of the given state when you pretend to move the mouse
-    # so that it does not effect the actual state.
+    # Instead of using a regular dictionary we recommend you use a Counter object to avoid needing to check for keys before using
+    # them. Counters default any unseen key to the value of 0.
 
-    # Uncomment this when you start implementing
-    # self._echo_grid.update(state) # Do Not Remove, it is required to have the EchoGrid give accurate information
+    # Remember to normalize brefore updating the agents thoughts and to look over only valid positions (use self._valid_positions).
 
-    # Write your code here
-    raise NotImplementedError("MarkovAgent's Predict not implemented")
- 
+    def listen(self, state):
+        # Question 1, your MarkovAgent listen solution goes here.
+        # For this method there is a special case to consider which happens when the distribution given by the EchoGrid
+        # has only information which has NOT been seen before. In this case you must reset your current thought distribution
+        # before continuing.
+
+        # Uncomment this when you start implementing
+        self._echo_grid.update(state)  # Do Not Remove, it is required to have the EchoGrid give accurate information
+
+        new_counter = Counter()
+        distribution = self._echo_grid.get_echo_distribution()
+        seen = False
+        for k in distribution.keys():
+            if k in self._thoughts and self._thoughts[k] != 0:
+                seen = True
+        if not seen:
+            self.reset_thoughts()
+        for key, val in distribution.items():
+            if key in self._valid_positions:
+                new_counter[key] = val * self._thoughts[key]
+        DistributionModel.normalize(new_counter)
+        self._thoughts = new_counter
+
+        print("======================================")
+        print(self._thoughts.items())
+        print("======================================")
+
+    # Implement the Time Lapse for HMM (Question 3)
+    def predict(self, state):
+        # Question 2, your MarkovAgent predict solution goes here.
+        # Recall for the predict method we want to track one mouse down at a time by "predicting their moves". This should
+        # be done through moving the mouse into positions on the map using this distribution to update your thoughts.
+        # To avoid annoyances of state manipulation you should use a copy of the given state when you pretend to move the mouse
+        # so that it does not effect the actual state.
+
+        # Uncomment this when you start implementing
+        self._echo_grid.update(state)  # Do Not Remove, it is required to have the EchoGrid give accurate information
+
+        # Write your code here
+        new_dist = Counter()
+        dist = self._echo_grid.get_echo_distribution()
+        mouse_pos = state.get_mouse_locations()[:]
+        max_v = 0
+        for k, v in dist.items():
+            if v > max_v and k in mouse_pos:
+                start_pos = k
+                max_v = v
+        mouse_dist = DistributionModel.get_movement_distribution(state, start_pos)
+        for k, v in mouse_dist.items():
+            new_dist[k] = dist[k] * v
+        visited = [start_pos]
+        waiting = [k for k in list(mouse_dist.keys())]
+        while waiting:
+            pos = waiting.pop()
+            if pos not in visited:
+                temp_state = state.copy()
+                handler = GameStateHandler(temp_state)
+                handler.move_mouse(start_pos, pos)
+                move_dist = DistributionModel.get_movement_distribution(temp_state, pos)
+                for k, v in move_dist.items():
+                    if new_dist[k] == 0:
+                        cur_dist = dist[k] * v
+                    else:
+                        cur_dist = new_dist[k] * v
+                    new_dist[k] = cur_dist
+                    waiting.append(k)
+                visited.append(pos)
+            DistributionModel.normalize(new_dist)
+        self._thoughts = new_dist
+        print("======================================")
+        print("Thoughts ", self._thoughts.items())
+        print("======================================")
+        print("Current mouse position ", mouse_pos)
+        print("======================================")
+        print("Player position ", state.get_player_position())
+        print("======================================")

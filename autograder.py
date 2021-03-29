@@ -72,7 +72,7 @@ def particle_reweight_test(simulator, state, solution):
 
   # Reweight the particles
   grid.reweight_particles(dist)
-
+  
   return grid.get_particle_distribution() == convert_solution(solution)
 
 def test(tests, tester):
@@ -90,18 +90,18 @@ def test(tests, tester):
 
       sim = Simulator(map_file, WAIT_TIME)
       sim.verbose(VERBOSE)
-
+      
       result = tester(sim, state, solution)
-      earned = int(result)
+      earned = int(result) 
       print("Testing: {}\t [{}/{}]".format(name, earned, 1))
 
       earned_marks += earned
-
+      
     except NotImplementedError as e:
       print("Testing {}\t [{}]\t [0/1]".format(name, e))
 
   return earned_marks, total_marks
-
+  
 if __name__ == "__main__":
   parser = ArgumentParser(description = "Running Autograder for Assignment 4")
   parser.add_argument("-v", "--verbose", help = "Displays the actions the agent is taking during the simulation",
@@ -115,21 +115,21 @@ if __name__ == "__main__":
   if args.waitTime :
     WAIT_TIME = args.waitTime
 
-  # Start the tests
+  # Start the tests  
   total_marks, earned_marks = 0, 0
-
+  
   print("------ Question 1 ------")
   e, t = test(["listen/small_markov_test", "listen/small_markov_test_2",
                "listen/markov_confirm_test", "listen/markov_confirm_test_2"], markov_listen_test)
   total_marks += t
   earned_marks += e
-
+  
   print("\n------ Question 2 ------")
   e, t = test(["predict/small_markov_test", "predict/medium_markov_test",
                "predict/markov_confirm_test", "predict/markov_confirm_test_2"], markov_predict_test)
   total_marks += t
   earned_marks += e
-
+  
   print("\n------ Question 3 ------")
   e, t = test(["particles/open_test", "particles/entity_test"], particle_reset_test)
   total_marks += t
@@ -139,17 +139,17 @@ if __name__ == "__main__":
   e, t = test(["particles/weight_test", "particles/weight_test_2"], particle_reweight_test)
   total_marks += t
   earned_marks += e
-
+  
   print("\n------ Question 5 ------")
   e, t = test(["listen/small_particle_test", "listen/small_particle_test_2",
                "listen/particle_confirm_test", "listen/particle_confirm_test_2"], particle_listen_test)
   total_marks += t
   earned_marks += e
-
+  
   print("\n------ Question 6 ------")
   e, t = test(["predict/small_particle_test", "predict/medium_particle_test",
                "predict/particle_confirm_test", "predict/particle_confirm_test_2"], particle_predict_test)
   total_marks += t
   earned_marks += e
-
+  
   print("\n\nTotal Grade: {}/{}".format(earned_marks, total_marks))

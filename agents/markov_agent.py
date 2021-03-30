@@ -46,29 +46,6 @@ class MarkovAgent(ProbabilityAgent):
         new_counter[key] = val * self._thoughts[key]
     DistributionModel.normalize(new_counter)
     self._thoughts = new_counter
-    """
-    for pos in self._valid_positions:
-      ft1 = self._thoughts[pos] #ft = something
-      if (ft1 == 0):
-        #self.reset_thoughts()
-        pr1 = distribution[pos] * len(self._valid_positions)
-      else:
-        pr1 = distribution[pos] / self._thoughts[pos]
-      
-      move_dist = DistributionModel.get_movement_distribution(state, pos) 
-      pr2 = move_dist[pos] #Pr(Xt|Xt-1) =
-      ft_sum = pr1*pr2*ft1 + pr1*pr2*(1 - ft1)#something
-      
-      new_counter.update({pos : ft_sum}) #Pr(et - 1|xt - 1)Ft-1(Xt -1)Pr(Xt|Xt-1)
-    
-    
-    for pos, val in new_counter.items():
-      self._thoughts[pos] = val
-    """
-
-    print("======================================")
-    print(self._thoughts.items())
-    print("======================================")
     
     
   # Implement the Time Lapse for HMM (Question 3)

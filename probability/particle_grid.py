@@ -28,8 +28,15 @@ class ParticleGrid:
     # For sampling use DistributionModel.sample_distribution(distribution, sample_amount) which will
     # return a list of legal positions got by sampling the given distribution.
     self._particle_distribution = Counter()
-    raise NotImplementedError("Reweight Particles method not implemented")
+    samples = DistributionModel.sample_distribution(distribution, self._particle_count)
+    #x different positions
+    #s different samples
+    #weight(pos(y)) = # times pos(y) in samples / # of particles i.e. len(samples)
     
+    for pos in self._valid_positions:
+        self._particle_distribution[pos] = samples.count(pos)
+    
+    DistributionModel.normalize(self._particle_distribution)
       
   def get_particle_distribution(self):
     return self._particle_distribution

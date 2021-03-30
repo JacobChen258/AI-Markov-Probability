@@ -18,7 +18,7 @@ class ParticleGrid:
     for pos in self._valid_positions:
         self._particle_distribution[pos] = num_particles
     DistributionModel.normalize(self._particle_distribution)
-    print(self._particle_distribution.items())
+    
     
   def reweight_particles(self, distribution):
     # Qustion 4, your reweight particles implementation goes here.

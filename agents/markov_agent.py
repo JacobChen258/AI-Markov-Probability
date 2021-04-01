@@ -48,10 +48,6 @@ class MarkovAgent(ProbabilityAgent):
         DistributionModel.normalize(new_counter)
         self._thoughts = new_counter
 
-        print("======================================")
-        print(self._thoughts.items())
-        print("======================================")
-
     # Implement the Time Lapse for HMM (Question 3)
     def predict(self, state):
         # Question 2, your MarkovAgent predict solution goes here.
@@ -65,18 +61,31 @@ class MarkovAgent(ProbabilityAgent):
 
         # Write your code here
         new_dist = Counter()
-        dist = self._echo_grid.get_echo_distribution()
+        echo_dist = self._echo_grid.get_echo_distribution()
+        mouse_pos = state.get_mouse_locations()[0]
+        for pos in self._valid_positions:
+            temp_state = state.copy()
+            handler = GameStateHandler(temp_state)
+            handler.move_mouse(mouse_pos, pos)
+            move_dist = DistributionModel.get_movement_distribution(temp_state, pos)
+            dist = (pos[0]-mouse_pos[0],pos[1]-mouse_pos[1])
+            for k, v in move_dist.items():
+                new_dist[k] += echo_dist[mouse_pos] * v
+        DistributionModel.normalize(new_dist)
+        self._thoughts = new_dist
+        """
         mouse_pos = state.get_mouse_locations()[:]
-        max_v = 0
-        for k, v in dist.items():
-            if v > max_v and k in mouse_pos:
-                start_pos = k
-                max_v = v
-        mouse_dist = DistributionModel.get_movement_distribution(state, start_pos)
-        for k, v in mouse_dist.items():
-            new_dist[k] = dist[k] * v
+        max_v = -1
+        self.listen(state)
+        for pos in mouse_pos:
+            if self._thoughts[pos] > max_v:
+                start_pos = pos
+                max_v = dist[pos]
+        mouse_dist = DistributionModel.get_movement_distribution(state,start_pos)
+        for k,v in mouse_dist.items():
+            new_dist[k] = max_v * v
         visited = [start_pos]
-        waiting = [k for k in list(mouse_dist.keys())]
+        waiting = list(mouse_dist.keys())
         while waiting:
             pos = waiting.pop()
             if pos not in visited:
@@ -84,20 +93,17 @@ class MarkovAgent(ProbabilityAgent):
                 handler = GameStateHandler(temp_state)
                 handler.move_mouse(start_pos, pos)
                 move_dist = DistributionModel.get_movement_distribution(temp_state, pos)
+                pos_dist = new_dist[pos]
                 for k, v in move_dist.items():
-                    if new_dist[k] == 0:
-                        cur_dist = dist[k] * v
-                    else:
-                        cur_dist = new_dist[k] * v
-                    new_dist[k] = cur_dist
+                    new_dist[k] += pos_dist*v
                     waiting.append(k)
                 visited.append(pos)
-            DistributionModel.normalize(new_dist)
+        DistributionModel.normalize(new_dist)
         self._thoughts = new_dist
+        """
         print("======================================")
-        print("Thoughts ", self._thoughts.items())
+        print("Thoughts ", sorted(self._thoughts.items(),key = lambda key:key[1],reverse=True))
         print("======================================")
         print("Current mouse position ", mouse_pos)
         print("======================================")
         print("Player position ", state.get_player_position())
-        print("======================================")

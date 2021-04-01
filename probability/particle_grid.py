@@ -14,7 +14,11 @@ class ParticleGrid:
     # Make sure to have the particle distribution be a _Counter_ not a regular dictionary!
     
     self._particle_distribution = Counter()
-    raise NotImplementedError("Reset method not implemented")
+    num_particles = self._particle_count / len(self._valid_positions)
+    for pos in self._valid_positions:
+        self._particle_distribution[pos] = num_particles
+    DistributionModel.normalize(self._particle_distribution)
+    
     
   def reweight_particles(self, distribution):
     # Qustion 4, your reweight particles implementation goes here.
@@ -24,8 +28,16 @@ class ParticleGrid:
     # For sampling use DistributionModel.sample_distribution(distribution, sample_amount) which will
     # return a list of legal positions got by sampling the given distribution.
     self._particle_distribution = Counter()
-    raise NotImplementedError("Reweight Particles method not implemented")
+    samples = DistributionModel.sample_distribution(distribution, self._particle_count)
+    #x different positions
+    #s different samples
+    #weight(pos(y)) = # times pos(y) in samples / # of particles i.e. len(samples)
     
+    for pos in self._valid_positions:
+        self._particle_distribution[pos] = samples.count(pos)
+    DistributionModel.normalize(self._particle_distribution)
+    if (1 in self._particle_distribution.values()):
+        self.reset()
       
   def get_particle_distribution(self):
     return self._particle_distribution

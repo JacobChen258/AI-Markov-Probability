@@ -46,10 +46,10 @@ class ParticleAgent(ProbabilityAgent):
         for k in self._valid_positions:
             if not (echo_distribution[k] == 0):
                 new_counter[k] = echo_distribution[k] * self._thoughts[k]    
-        if (sum(new_counter.values()) == 0):
-            self.reset_thoughts()
+        if sum(new_counter.values()) == 0:
             self._particle_grid.reset()
-            return 
+            self._thoughts = self._particle_grid.get_particle_distribution()
+            return
         DistributionModel.normalize(new_counter)
         
         self._particle_grid.reweight_particles(new_counter)
@@ -81,7 +81,29 @@ class ParticleAgent(ProbabilityAgent):
         # and remember to reweight the particles after updating the agent's thoughts.
 
         # Uncomment this when you start implementing
-        # self._echo_grid.update(state) # Do Not Remove, it is required to have the EchoGrid give accurate information
+        self._echo_grid.update(state) # Do Not Remove, it is required to have the EchoGrid give accurate information
 
         # Write your code here
-        raise NotImplementedError("ParticleAgent's Predict not implemented")
+        new_thoughts = Counter()
+        mouse_pos = state.get_mouse_locations()[0]
+        for pos in self._valid_positions:
+            temp_state = state.copy()
+            handler = GameStateHandler(temp_state)
+            handler.move_mouse(mouse_pos, pos)
+            move_dist = DistributionModel.get_movement_distribution(temp_state, pos)
+            for k, v in move_dist.items():
+                new_thoughts[k] += v * self._thoughts[pos]
+        if sum(new_thoughts.values()) == 0:
+            self._particle_grid.reset()
+            self._thoughts=self._particle_grid.get_particle_distribution()
+            print("=====================================")
+            print("4) thoughts: ", sorted(self._thoughts.items(), key=lambda kv: kv[1], reverse=True))
+            print("=====================================")
+            return
+        DistributionModel.normalize(new_thoughts)
+
+        self._particle_grid.reweight_particles(new_thoughts)
+        self._thoughts = self._particle_grid.get_particle_distribution()
+        print("=====================================")
+        print("4) thoughts: ", sorted(self._thoughts.items(), key=lambda kv: kv[1], reverse=True))
+        print("=====================================")

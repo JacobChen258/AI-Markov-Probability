@@ -66,6 +66,9 @@ class MarkovAgent(ProbabilityAgent):
             move_dist = DistributionModel.get_movement_distribution(temp_state, pos)
             for k, v in move_dist.items():
                 new_dist[k] += v * self._thoughts[pos]
+        if sum(new_dist.values()) == 0:
+            self.reset_thoughts()
+            return
         DistributionModel.normalize(new_dist)
         self._thoughts = new_dist
         """

@@ -38,53 +38,38 @@ class ParticleAgent(ProbabilityAgent):
 
         # Uncomment this when you start implementing
         self._echo_grid.update(state)
-
+        
         # Write your code here
         new_counter = Counter()
         echo_distribution = self._echo_grid.get_echo_distribution()
         
-        seen = False
-        for key in echo_distribution.keys():
-            if key in self._thoughts and self._thoughts[key] != 0:
-                seen = True
-        if not seen:
+        for k in self._valid_positions:
+            if not (echo_distribution[k] == 0):
+                new_counter[k] = echo_distribution[k] * self._thoughts[k]    
+        if (sum(new_counter.values()) == 0):
             self.reset_thoughts()
             self._particle_grid.reset()
-        for k in self._valid_positions:
-            new_counter[k] = echo_distribution[k] * self._particle_grid.get_particle_distribution()[k] 
+            return 
         DistributionModel.normalize(new_counter)
         
-        self._thoughts = self._particle_grid.get_particle_distribution()
         self._particle_grid.reweight_particles(new_counter)
+        self._thoughts = self._particle_grid.get_particle_distribution()
         
         """
-        new_counter = Counter()
-        echo_distribution = self._echo_grid.get_echo_distribution()
-        self._particle_grid.reweight_particles(echo_distribution)
         
-        seen = False
-        for key in echo_distribution.keys():
-            if key in self._particle_grid.get_particle_distribution() and self._particle_grid.get_particle_distribution()[key] != 0:
-                seen = True
-        if not seen:
-            self.reset_thoughts()
-            self._particle_grid.reset()
-        for k in self._valid_positions:
-            new_counter[k] = echo_distribution[k] * self._particle_grid.get_particle_distribution()[k]
-        DistributionModel.normalize(new_counter)
-        self._thoughts = new_counter
-        self._particle_grid.reweight_particles(self._thoughts)
+        print("=====================================")
+        print("1) echo: ", sorted(echo_distribution.items(), key = lambda kv: kv[1], reverse=True))
+        print("=====================================")
+        print("=====================================")
+        print("2) particles: ", sorted(self._particle_grid.get_particle_distribution().items(), key = lambda kv: kv[1], reverse=True))
+        print("=====================================")
+        print("=====================================")
+        print("3) new_counter: ", sorted(new_counter.items(), key = lambda kv: kv[1], reverse=True))
+        print("=====================================")
+        print("=====================================")
+        print("4) thoughts: ", sorted(self._thoughts.items(), key = lambda kv: kv[1],reverse=True))
+        print("=====================================")
         """
-        print("=====================================")
-        print("echo: ", echo_distribution.items())
-        print("=====================================")
-        print("=====================================")
-        print("particles: ", self._particle_grid.get_particle_distribution().items())
-        print("=====================================")
-        print("=====================================")
-        print("thoughts: ", self._thoughts.items())
-        print("=====================================")
-      
     def predict(self, state):
         # Question 6, your ParticleAgent predict solution goes here.
         # Recall for the predict method we want to track one mouse down at a time by "predicting their moves". This should

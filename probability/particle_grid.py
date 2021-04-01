@@ -35,8 +35,9 @@ class ParticleGrid:
     
     for pos in self._valid_positions:
         self._particle_distribution[pos] = samples.count(pos)
-    
     DistributionModel.normalize(self._particle_distribution)
+    if (1 in self._particle_distribution.values()):
+        self.reset()
       
   def get_particle_distribution(self):
     return self._particle_distribution

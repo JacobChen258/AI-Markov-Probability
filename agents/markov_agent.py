@@ -34,16 +34,12 @@ class MarkovAgent(ProbabilityAgent):
         # Uncomment this when you start implementing
         self._echo_grid.update(state)  # Do Not Remove, it is required to have the EchoGrid give accurate information
 
-        new_counter = Counter()
+        new_thoughts = Counter()
         distribution = self._echo_grid.get_echo_distribution()
         for key, val in distribution.items():
             if key in self._valid_positions:
-                new_counter[key] = val * self._thoughts[key]
-        if sum(new_counter.values()) == 0:
-            self.reset_thoughts()
-            return
-        DistributionModel.normalize(new_counter)
-        self._thoughts = new_counter
+                new_thoughts[key] = val * self._thoughts[key]
+        self.check_zero_continue(new_thoughts)
 
     # Implement the Time Lapse for HMM (Question 3)
     def predict(self, state):
@@ -57,20 +53,17 @@ class MarkovAgent(ProbabilityAgent):
         self._echo_grid.update(state)  # Do Not Remove, it is required to have the EchoGrid give accurate information
 
         # Write your code here
-        new_dist = Counter()
+        new_thoughts = Counter()
         mouse_pos = state.get_mouse_locations()[0]
+        temp_state = state.copy()
+        handler = GameStateHandler(temp_state)
         for pos in self._valid_positions:
-            temp_state = state.copy()
-            handler = GameStateHandler(temp_state)
             handler.move_mouse(mouse_pos, pos)
+            mouse_pos = pos
             move_dist = DistributionModel.get_movement_distribution(temp_state, pos)
             for k, v in move_dist.items():
-                new_dist[k] += v * self._thoughts[pos]
-        if sum(new_dist.values()) == 0:
-            self.reset_thoughts()
-            return
-        DistributionModel.normalize(new_dist)
-        self._thoughts = new_dist
+                new_thoughts[k] += v * self._thoughts[pos]
+        self.check_zero_continue(new_thoughts)
         """
         self._thoughts = new_dist
         print("======================================")
@@ -80,3 +73,9 @@ class MarkovAgent(ProbabilityAgent):
         print("======================================")
         print("Player position ", state.get_player_position())
         """
+    def check_zero_continue(self,distribution):
+        if sum(distribution.values()) == 0:
+            self.reset_thoughts()
+            return
+        DistributionModel.normalize(distribution)
+        self._thoughts = distribution

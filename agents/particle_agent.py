@@ -40,36 +40,14 @@ class ParticleAgent(ProbabilityAgent):
         self._echo_grid.update(state)
         
         # Write your code here
-        new_counter = Counter()
+        new_thoughts = Counter()
         echo_distribution = self._echo_grid.get_echo_distribution()
         
         for k in self._valid_positions:
             if not (echo_distribution[k] == 0):
-                new_counter[k] = echo_distribution[k] * self._thoughts[k]    
-        if sum(new_counter.values()) == 0:
-            self._particle_grid.reset()
-            self._thoughts = self._particle_grid.get_particle_distribution()
-            return
-        DistributionModel.normalize(new_counter)
-        
-        self._particle_grid.reweight_particles(new_counter)
-        self._thoughts = self._particle_grid.get_particle_distribution()
-        
-        """
-        
-        print("=====================================")
-        print("1) echo: ", sorted(echo_distribution.items(), key = lambda kv: kv[1], reverse=True))
-        print("=====================================")
-        print("=====================================")
-        print("2) particles: ", sorted(self._particle_grid.get_particle_distribution().items(), key = lambda kv: kv[1], reverse=True))
-        print("=====================================")
-        print("=====================================")
-        print("3) new_counter: ", sorted(new_counter.items(), key = lambda kv: kv[1], reverse=True))
-        print("=====================================")
-        print("=====================================")
-        print("4) thoughts: ", sorted(self._thoughts.items(), key = lambda kv: kv[1],reverse=True))
-        print("=====================================")
-        """
+                new_thoughts[k] = echo_distribution[k] * self._thoughts[k]
+        self.check_zero_continue(new_thoughts)
+
     def predict(self, state):
         # Question 6, your ParticleAgent predict solution goes here.
         # Recall for the predict method we want to track one mouse down at a time by "predicting their moves". This should
@@ -86,24 +64,26 @@ class ParticleAgent(ProbabilityAgent):
         # Write your code here
         new_thoughts = Counter()
         mouse_pos = state.get_mouse_locations()[0]
+        temp_state = state.copy()
+        handler = GameStateHandler(temp_state)
         for pos in self._valid_positions:
-            temp_state = state.copy()
-            handler = GameStateHandler(temp_state)
             handler.move_mouse(mouse_pos, pos)
+            mouse_pos = pos
             move_dist = DistributionModel.get_movement_distribution(temp_state, pos)
             for k, v in move_dist.items():
                 new_thoughts[k] += v * self._thoughts[pos]
-        if sum(new_thoughts.values()) == 0:
-            self._particle_grid.reset()
-            self._thoughts=self._particle_grid.get_particle_distribution()
-            print("=====================================")
-            print("4) thoughts: ", sorted(self._thoughts.items(), key=lambda kv: kv[1], reverse=True))
-            print("=====================================")
-            return
-        DistributionModel.normalize(new_thoughts)
+        self.check_zero_continue(new_thoughts)
 
-        self._particle_grid.reweight_particles(new_thoughts)
-        self._thoughts = self._particle_grid.get_particle_distribution()
+    def check_zero_continue(self,distribution):
+        if sum(distribution.values()) == 0:
+            self._particle_grid.reset()
+            self._thoughts = self._particle_grid.get_particle_distribution()
+        else:
+            DistributionModel.normalize(distribution)
+            self._particle_grid.reweight_particles(distribution)
+            self._thoughts = self._particle_grid.get_particle_distribution()
+        '''
         print("=====================================")
         print("4) thoughts: ", sorted(self._thoughts.items(), key=lambda kv: kv[1], reverse=True))
         print("=====================================")
+        '''

@@ -14,7 +14,7 @@ class ParticleGrid:
         # Recall this method resets the particle distribution to be a uniform distribution.
         # Make sure to have the particle distribution be a _Counter_ not a regular dictionary!
         self._particle_distribution = Counter()
-        num_particles = self._particle_count / len(self._valid_positions)
+        num_particles = self._particle_count // len(self._valid_positions)
         for pos in self._valid_positions:
             self._particle_distribution[pos] = num_particles
         DistributionModel.normalize(self._particle_distribution)

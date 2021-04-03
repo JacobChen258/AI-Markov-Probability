@@ -49,26 +49,15 @@ class ParticleAgent(ProbabilityAgent):
         self.check_zero_continue(new_thoughts)
 
     def predict(self, state):
-        # Question 6, your ParticleAgent predict solution goes here.
-        # Recall for the predict method we want to track one mouse down at a time by "predicting their moves". This should
-        # be done through moving the mouse into positions on the map using this distribution to update your thoughts.
-        # To avoid annoyances of state manipulation you should use a copy of the given state when you pretend to move the mouse
-        # so that it does not effect the actual state.
-
-        # As an addition the special case from above carries through to this method and should be handled in the same fashion
-        # and remember to reweight the particles after updating the agent's thoughts.
-
-        # Uncomment this when you start implementing
         self._echo_grid.update(state) # Do Not Remove, it is required to have the EchoGrid give accurate information
 
         # Write your code here
         new_thoughts = Counter()
         mouse_pos = state.get_mouse_locations()[0]
-        temp_state = state.copy()
-        handler = GameStateHandler(temp_state)
         for pos in self._valid_positions:
+            temp_state = state.copy()
+            handler = GameStateHandler(temp_state)
             handler.move_mouse(mouse_pos, pos)
-            mouse_pos = pos
             move_dist = DistributionModel.get_movement_distribution(temp_state, pos)
             for k, v in move_dist.items():
                 new_thoughts[k] += v * self._thoughts[pos]
@@ -77,13 +66,12 @@ class ParticleAgent(ProbabilityAgent):
     def check_zero_continue(self,distribution):
         if sum(distribution.values()) == 0:
             self._particle_grid.reset()
-            self._thoughts = self._particle_grid.get_particle_distribution()
+            self.reset_thoughts()
         else:
             DistributionModel.normalize(distribution)
             self._particle_grid.reweight_particles(distribution)
             self._thoughts = self._particle_grid.get_particle_distribution()
-        '''
         print("=====================================")
         print("4) thoughts: ", sorted(self._thoughts.items(), key=lambda kv: kv[1], reverse=True))
         print("=====================================")
-        '''
+

@@ -39,7 +39,15 @@ class MarkovAgent(ProbabilityAgent):
         for key, val in distribution.items():
             if key in self._valid_positions:
                 new_thoughts[key] = val * self._thoughts[key]
-        self.check_zero_continue(new_thoughts)
+        if sum(new_thoughts.values()) == 0:
+            self.reset_thoughts()
+            new_thoughts = Counter()
+            distribution = self._echo_grid.get_echo_distribution()
+            for key, val in distribution.items():
+                if key in self._valid_positions:
+                    new_thoughts[key] = val * self._thoughts[key]
+        DistributionModel.normalize(new_thoughts)
+        self._thoughts = new_thoughts
 
     # Implement the Time Lapse for HMM (Question 3)
     def predict(self, state):
@@ -55,27 +63,13 @@ class MarkovAgent(ProbabilityAgent):
         # Write your code here
         new_thoughts = Counter()
         mouse_pos = state.get_mouse_locations()[0]
-        temp_state = state.copy()
-        handler = GameStateHandler(temp_state)
         for pos in self._valid_positions:
+            temp_state = state.copy()
+            handler = GameStateHandler(temp_state)
             handler.move_mouse(mouse_pos, pos)
-            mouse_pos = pos
             move_dist = DistributionModel.get_movement_distribution(temp_state, pos)
             for k, v in move_dist.items():
                 new_thoughts[k] += v * self._thoughts[pos]
-        self.check_zero_continue(new_thoughts)
-        """
-        self._thoughts = new_dist
-        print("======================================")
-        print("Thoughts ", sorted(self._thoughts.items(),key = lambda key:key[1],reverse=True))
-        print("======================================")
-        print("Current mouse position ", mouse_pos)
-        print("======================================")
-        print("Player position ", state.get_player_position())
-        """
-    def check_zero_continue(self,distribution):
-        if sum(distribution.values()) == 0:
-            self.reset_thoughts()
-            return
-        DistributionModel.normalize(distribution)
-        self._thoughts = distribution
+        DistributionModel.normalize(new_thoughts)
+        self._thoughts = new_thoughts
+

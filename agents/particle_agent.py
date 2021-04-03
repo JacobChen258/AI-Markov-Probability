@@ -49,7 +49,7 @@ class ParticleAgent(ProbabilityAgent):
         self.check_zero_continue(new_thoughts)
 
     def predict(self, state):
-        self._echo_grid.update(state) # Do Not Remove, it is required to have the EchoGrid give accurate information
+        #self._echo_grid.update(state) Do Not Remove, it is required to have the EchoGrid give accurate information
 
         # Write your code here
         new_thoughts = Counter()
@@ -71,7 +71,4 @@ class ParticleAgent(ProbabilityAgent):
             DistributionModel.normalize(distribution)
             self._particle_grid.reweight_particles(distribution)
             self._thoughts = self._particle_grid.get_particle_distribution()
-        print("=====================================")
-        print("4) thoughts: ", sorted(self._thoughts.items(), key=lambda kv: kv[1], reverse=True))
-        print("=====================================")
 
